@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Dashboard · Aura{% endblock %}
+{% block content %}
+
+<h1>Dashboard</h1>
+
+{% if not models_ready %}
+<div class="flash flash-error">
+    Models are not trained yet. Run <code>python -m ml.generate_demo_dataset</code> then
+    <code>python -m ml.train</code> from the project root, and restart the app.
+</div>
+{% endif %}
+
+<div class="grid-3" style="margin-bottom:28px;">
+    <div class="stat-card">
+        <div class="stat-value">{{ total_students }}</div>
+        <div class="stat-label">Registered Students</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value ok">{{ today_present }}</div>
+        <div class="stat-label">Present Today</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value {{ 'ok' if models_ready else 'warn' }}">
+            <span class="status-dot"></span>{{ 'Ready' if models_ready else 'Untrained' }}
+        </div>
+        <div class="stat-label">Model Status</div>
+    </div>
+</div>
+
+<div class="panel">
+    <h3>Recent Attendance (last 7 days)</h3>
+    <table>
+        <thead>
+            <tr><th>Date</th><th>Time</th><th>Student</th><th>Combined Score</th><th>Result</th></tr>
+        </thead>
+        <tbody>
+            {% for r in recent %}
+            <tr>
+                <td class="mono">{{ r.date }}</td>
+                <td class="mono">{{ r.time.strftime('%H:%M:%S') }}</td>
+                <td>{{ r.student.name }} <span class="student-id" style="color:var(--muted);">({{ r.student.student_id }})</span></td>
+                <td class="mono">{{ "%.1f"|format(r.combined_score * 100) if r.combined_score is not none else "—" }}%</td>
+                <td><span class="badge {{ 'badge-present' if r.status == 'PRESENT' else 'badge-rejected' }}">{{ r.status }}</span></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" style="color:var(--muted);">No attendance recorded yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

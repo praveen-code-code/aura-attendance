@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Students · Aura{% endblock %}
+{% block content %}
+
+<h1>Students</h1>
+
+<div class="grid-2" style="align-items:start;">
+    <div class="panel">
+        <h3>Register New Student</h3>
+        <form method="POST" action="{{ url_for('students.register') }}">
+            <label for="student_id">Student ID</label>
+            <input type="text" id="student_id" name="student_id" placeholder="STU101" required>
+
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" required>
+
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email">
+
+            <label for="department">Department</label>
+            <input type="text" id="department" name="department">
+
+            <button type="submit" class="btn-block">Register Student</button>
+        </form>
+        <p class="field-hint" style="margin-top:12px;">
+            After registering, add their ECG/EEG samples to the dataset folder and
+            re-run <code>python -m ml.train</code> so the model can recognize them.
+        </p>
+    </div>
+
+    <div class="panel">
+        <h3>Enrolled Students ({{ students|length }})</h3>
+        <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Department</th><th></th></tr></thead>
+            <tbody>
+            {% for s in students %}
+                <tr>
+                    <td class="student-id">{{ s.student_id }}</td>
+                    <td>{{ s.name }}</td>
+                    <td>{{ s.department or "—" }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('students.delete', student_pk=s.id) }}"
+                              onsubmit="return confirm('Remove {{ s.name }}?');">
+                            <button type="submit" class="btn-danger" style="padding:5px 12px; font-size:0.8rem;">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+            {% else %}
+                <tr><td colspan="4" style="color:var(--muted);">No students registered yet.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

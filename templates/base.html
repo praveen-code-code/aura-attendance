@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Aura Attendance{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="topbar">
+        <div class="brand">
+            <svg class="trace-strip" viewBox="0 0 220 34" xmlns="http://www.w3.org/2000/svg">
+                <path id="ecg-lead" class="trace-ecg" d="M0,17 L30,17 L38,4 L46,30 L54,17 L70,17 L76,10 L82,24 L88,17 L220,17"/>
+                <path class="trace-eeg" d="M0,22 Q10,14 20,22 T40,22 T60,20 T80,24 T100,18 T120,22 T140,20 T160,24 T180,18 T200,22 T220,20"/>
+                <circle class="sweep-dot" r="2.6">
+                    <animateMotion dur="3.2s" repeatCount="indefinite" rotate="auto">
+                        <mpath href="#ecg-lead"/>
+                    </animateMotion>
+                    <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.05;0.9;1" dur="3.2s" repeatCount="indefinite"/>
+                </circle>
+            </svg>
+            <span class="brand-mark">AURA<span class="accent">·</span>ATTENDANCE</span>
+        </div>
+        <div class="nav-links">
+            <a href="{{ url_for('attendance.attendance_page') }}">Take Attendance</a>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('admin.dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('students.list_students') }}">Students</a>
+                <a href="{{ url_for('admin.reports') }}">Reports</a>
+                <a href="{{ url_for('auth.logout') }}">Log Out</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}">Admin Login</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="page{% block page_class %}{% endblock %}">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer class="page-footer">Aura &mdash; AI-based multimodal biometric attendance (ECG + EEG), academic prototype.</footer>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

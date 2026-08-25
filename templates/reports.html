@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Reports · Aura{% endblock %}
+{% block content %}
+
+<h1>Attendance Reports</h1>
+
+<form method="GET" class="panel" style="display:flex; gap:16px; align-items:flex-end; margin-bottom:24px;">
+    <div style="flex:1;">
+        <label for="start">From</label>
+        <input type="date" id="start" name="start" value="{{ start or '' }}" style="margin-bottom:0;">
+    </div>
+    <div style="flex:1;">
+        <label for="end">To</label>
+        <input type="date" id="end" name="end" value="{{ end or '' }}" style="margin-bottom:0;">
+    </div>
+    <button type="submit">Filter</button>
+</form>
+
+<div class="panel">
+    <table>
+        <thead>
+            <tr><th>Date</th><th>Time</th><th>Student ID</th><th>Name</th><th>ECG Score</th><th>EEG Score</th><th>Combined</th></tr>
+        </thead>
+        <tbody>
+            {% for r in records %}
+            <tr>
+                <td class="mono">{{ r.date }}</td>
+                <td class="mono">{{ r.time.strftime('%H:%M:%S') }}</td>
+                <td class="student-id">{{ r.student.student_id }}</td>
+                <td>{{ r.student.name }}</td>
+                <td class="mono">{{ "%.1f"|format(r.ecg_score * 100) if r.ecg_score is not none else "—" }}%</td>
+                <td class="mono">{{ "%.1f"|format(r.eeg_score * 100) if r.eeg_score is not none else "—" }}%</td>
+                <td class="mono">{{ "%.1f"|format(r.combined_score * 100) if r.combined_score is not none else "—" }}%</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="7" style="color:var(--muted);">No records in this range.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}Take Attendance · Aura{% endblock %}
+{% block content %}
+
+<svg class="hero-trace" viewBox="0 0 1000 90" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,45 L120,45 L136,10 L152,80 L168,45 L220,45 L232,25 L244,65 L256,45 L1000,45"
+          fill="none" stroke="var(--ecg)" stroke-width="2"/>
+    <path d="M0,60 Q25,40 50,60 T100,58 T150,62 T200,50 T250,60 T300,55 T350,62 T400,50 T450,58 T500,54 T550,60 T600,52 T650,58 T700,55 T750,60 T800,52 T850,58 T900,55 T950,60 T1000,56"
+          fill="none" stroke="var(--eeg)" stroke-width="1.4" opacity="0.6"/>
+</svg>
+
+<h1>Take Attendance</h1>
+<p style="color:var(--muted); max-width:560px; margin-bottom:28px;">
+    Enter your student ID and upload a fresh ECG and EEG sample. Aura verifies both signals
+    against your enrolled biometric profile before marking you present.
+</p>
+
+<form id="attendance-form" class="panel" style="max-width:480px;">
+    <label for="student_id">Student ID</label>
+    <input type="text" id="student_id" name="student_id" placeholder="e.g. STU101" required autofocus>
+
+    <label for="ecg_file">ECG Sample</label>
+    <input type="file" id="ecg_file" name="ecg_file" accept=".csv,.txt,.npy" required>
+    <p class="field-hint">CSV, TXT, or NPY — one channel, single segment.</p>
+
+    <label for="eeg_file">EEG Sample</label>
+    <input type="file" id="eeg_file" name="eeg_file" accept=".csv,.txt,.npy" required>
+    <p class="field-hint">CSV, TXT, or NPY — one channel, single segment.</p>
+
+    <button type="submit" class="btn-block" id="submit-btn">Authenticate &amp; Mark Attendance</button>
+</form>
+
+<div id="result-panel" class="panel">
+    <h3 id="result-title"></h3>
+    <div class="score-row"><span class="label">Student</span><span class="mono" id="r-student"></span></div>
+    <div class="score-row"><span class="label">ECG Prediction</span><span class="mono" id="r-ecg"></span></div>
+    <div class="score-row"><span class="label">EEG Prediction</span><span class="mono" id="r-eeg"></span></div>
+    <div class="score-row"><span class="label">Combined Score</span><span class="score" id="r-combined"></span></div>
+    <div class="score-row"><span class="label">Attendance</span><span class="mono" id="r-attendance"></span></div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const form = document.getElementById('attendance-form');
+const submitBtn = document.getElementById('submit-btn');
+const resultPanel = document.getElementById('result-panel');
+
+const IDLE_LABEL = 'Authenticate &amp; Mark Attendance';
+
+function showResult(className, title, rows) {
+    resultPanel.classList.remove('is-visible');
+    resultPanel.className = 'panel ' + className;
+    document.getElementById('result-title').textContent = title;
+    document.getElementById('r-student').textContent = rows.student || '';
+    document.getElementById('r-ecg').textContent = rows.ecg || '';
+    document.getElementById('r-eeg').textContent = rows.eeg || '';
+    document.getElementById('r-combined').textContent = rows.combined || '';
+    document.getElementById('r-attendance').textContent = rows.attendance || '';
+    // restart the reveal animation even if the panel was already visible
+    void resultPanel.offsetWidth;
+    resultPanel.classList.add('is-visible');
+    resultPanel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="btn-spinner"></span>Verifying…';
+    resultPanel.classList.remove('is-visible');
+
+    const formData = new FormData(form);
+    try {
+        const res = await fetch("{{ url_for('attendance.mark_attendance') }}", {
+            method: 'POST',
+            body: formData,
+        });
+        const data = await res.json();
+
+        if (!res.ok && !data.duplicate && data.error) {
+            alert(data.error);
+            return;
+        }
+
+        if (data.duplicate) {
+            showResult('result-verified', 'Already Marked', { attendance: data.message });
+            return;
+        }
+
+        showResult(
+            data.authenticated ? 'result-verified' : 'result-rejected',
+            data.authenticated ? 'Identity Verified' : 'Authentication Failed',
+            {
+                student: `${data.student_name} (${data.student_id})`,
+                ecg: `${data.ecg_prediction} · ${data.ecg_confidence}%`,
+                eeg: `${data.eeg_prediction} · ${data.eeg_confidence}%`,
+                combined: `${data.combined_score}%`,
+                attendance: data.attendance,
+            }
+        );
+    } catch (err) {
+        alert('Request failed: ' + err);
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = IDLE_LABEL;
+    }
+});
+</script>
+{% endblock %}
