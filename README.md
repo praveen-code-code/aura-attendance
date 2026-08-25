@@ -91,4 +91,10 @@ aura-attendance/
 └── dataset/, trained_models/, uploads/   (created/populated at runtime)
 ```
 
+##.env
+AURA_SECRET_KEY=change-me-to-a-random-value
+DATABASE_URL=postgresql://postgres:1616@localhost:5432/aura_db
+AURA_ECG_WEIGHT=0.5
+AURA_EEG_WEIGHT=0.5
+AURA_AUTH_THRESHOLD=0.60
 
